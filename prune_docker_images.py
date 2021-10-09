@@ -1,17 +1,16 @@
 import docker
 import datetime
 from dateutil import parser
-import pytz
 import logging
+import pytz
+import sys
 
 # Initialize docker client
 client = docker.from_env()
 logging.basicConfig(level=logging.INFO)
 
-# Arguments
-THRESHOLD_IN_MINUTES = 1440
+# Constants
 TAGS_TO_RETAIN = 3
-
 
 def prune_images(images):
     for image in images:
@@ -69,8 +68,15 @@ def get_all_images():
 
 
 if __name__ == "__main__":
+    # Parse argument
+    THRESHOLD_IN_MINUTES = int(sys.argv[1]) if len(sys.argv) > 1 else 1440
+    
+    # Get all images
     all_images = get_all_images()
+    
+    # Get images to be pruned after applying filter
     images_to_be_pruned = get_images_to_be_pruned(
         all_images, TAGS_TO_RETAIN, THRESHOLD_IN_MINUTES)
 
+    # Prune images
     prune_images(images_to_be_pruned)
