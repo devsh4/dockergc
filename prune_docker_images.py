@@ -2,42 +2,49 @@ import docker
 import datetime
 from dateutil import parser
 import pytz
-import json
 import logging
 
+# Initialize docker client
 client = docker.from_env()
 logging.basicConfig(level=logging.INFO)
-THRESHOLD_IN_MINUTES = 365
+
+# Arguments
+THRESHOLD_IN_MINUTES = 1440
 TAGS_TO_RETAIN = 3
 
 
-def prune_images(eligible_images):
-    for image in eligible_images:
+def prune_images(images):
+    for image in images:
         try:
+            logging.info("Pruning image: %s", image)
             client.images.remove(image=image, force=True)
         except docker.errors.APIError as e:
             if "image has dependent child images" in str(e):
                 logging.warning(
                     "Can't delete image %s as it has dependent child images.", image)
+            elif "image is being used by stopped container" in str(e):
+                logging.warning(
+                    "Can't delete image %s as it is in use.", image)
             else:
                 logging.error(str(e))
 
-    logging.info("Pruned image versions - %s", eligible_images)
 
+def get_images_to_be_pruned(base_images, TAGS_TO_RETAIN, THRESHOLD_IN_MINUTES):
+    images_to_be_pruned = []
 
-def get_eligible_images(images, TAGS_TO_RETAIN, THRESHOLD_IN_MINUTES):
-    eligible_images = []
+    for base_image in base_images:
+        # Preserving latest 3 images
+        sorted_images = sorted(
+            base_images[base_image], key=lambda d: d['created_at'], reverse=True)
+        eligible_images = sorted_images[TAGS_TO_RETAIN:]
 
-    for i in images:
-        if len(images[i]) > TAGS_TO_RETAIN:
-            for y in images[i]:
-                for k, v in y.items():
-                    createdTime = parser.parse(v)
-                    if createdTime < datetime.datetime.now(pytz.utc)-datetime.timedelta(days=THRESHOLD_IN_MINUTES) and len(images[i]) > TAGS_TO_RETAIN:
-                        eligible_images.append(k)
+        # Filtering by THRESHOLD_IN_MINUTES
+        for x in eligible_images:
+            createdTime = parser.parse(x["created_at"])
+            if createdTime < datetime.datetime.now(pytz.utc)-datetime.timedelta(minutes=THRESHOLD_IN_MINUTES):
+                images_to_be_pruned.append(x["id"])
 
-    logging.info("Eligible images for pruning %s", eligible_images)
-    return eligible_images
+    return images_to_be_pruned
 
 
 def get_all_images():
@@ -56,15 +63,14 @@ def get_all_images():
                 images[base_image] = []
 
             # Push images to dictionary
-            images[base_image].append({id: created_time})
+            images[base_image].append({"id": id, "created_at": created_time})
 
-    print(json.dumps(images, indent=4))
     return images
 
 
 if __name__ == "__main__":
     all_images = get_all_images()
-    eligible_images = get_eligible_images(
+    images_to_be_pruned = get_images_to_be_pruned(
         all_images, TAGS_TO_RETAIN, THRESHOLD_IN_MINUTES)
 
-    prune_images(eligible_images)
+    prune_images(images_to_be_pruned)
