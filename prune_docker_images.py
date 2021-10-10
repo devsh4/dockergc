@@ -51,9 +51,8 @@ def get_all_images():
     images = {}
 
     for image in client.images.list():
-        # Assumption 1: Don't want to prune intermediate images as that might still be used in latest image versions
-        # Assumption 2: Don't want to prune 1 image that has "n" tags, because technically that's still 1 version & we want to keep last 3 images
-        if image.tags != [] and len(image.tags) == 1:
+        # Assumption: Don't want to prune intermediate images as that might still be used in latest image versions
+        if image.tags != []:
             base_image = image.tags[0].split(":")[0]
             id = image.id
             created_time = image.attrs['Created']
