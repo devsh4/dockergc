@@ -35,8 +35,8 @@ python3 prune_docker_images.py 1440
 
 Here is an example of how the application works for a bunch of `mysql` images where `TIMEOUT_IN_MINUTES=1440 (24 hours)` -
 
-Example:
 ![Example](testcase.png)
 
 Execution Logs:
+
 ![Execution](result.png)
