@@ -9,14 +9,15 @@ This application will prune local docker image versions based on the following c
 
 ## Assumptions
 
-1. Don't want to prune a single image that has "n" tags, because technically that's still one version & we want to keep last 3 image versions
+1. Application doesn't prune a single image that has `n` tags, because technically it's pointing to 1 version & we want to keep last 3 versions
 
-2. Don't want to prune an image version that has dependent child images but the application handles that exception gracefully.
-
+2. Application doesn't prune an image version that has dependent child images
    - **Example #1** - Docker API will throw an exception if we try to prune an eligible `python:3` image which is being used my another image called `mypythonapp`
    - **Example #2** - Docker API will throw an exception if we try to prune an eligible untagged intermediate image i.e. `<none:<none>` where some of it's layers are being used by a new version of that image
 
-3. We cannot use `prune()` API method for removing images because it only accepts a filter as argument. Since we are creating a custom filter, `remove()` method is a better choice.
+3. Application doesn't prune an image that is currently in use.
+
+4. Application is not using `prune()` method for removing images because it only accepts a filter as argument. Since we are creating a custom filter, `remove()` method is a better choice.
 
 ## How to run
 
@@ -29,3 +30,13 @@ python3 prune_docker_images.py 1440
 ```
 
 *Note: If `minutes` argument isn't passed, the default is 1440 minutes (24 hours).*
+
+## Results
+
+Here is an example of how the application works for a bunch of `mysql` images where `TIMEOUT_IN_MINUTES=1440 (24 hours)` -
+
+Example:
+![Example](Testcase.png)
+
+Execution Logs:
+![Execution](result.png)

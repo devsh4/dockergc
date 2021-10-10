@@ -17,13 +17,14 @@ def prune_images(images):
         try:
             logging.info("Pruning image: %s", image)
             client.images.remove(image=image, force=True)
+            logging.info("Successfully pruned image: %s \n", image)
         except docker.errors.APIError as e:
             if "image has dependent child images" in str(e):
                 logging.warning(
-                    "Can't delete image %s as it has dependent child images.", image)
+                    "Can't delete image [%s] as it has dependent child images. \n", image)
             elif "image is being used by stopped container" in str(e):
                 logging.warning(
-                    "Can't delete image %s as it is in use.", image)
+                    "Can't delete image [%s] as it is in use. \n", image)
             else:
                 logging.error(str(e))
 
@@ -57,7 +58,7 @@ def get_all_images():
             id = image.id
             created_time = image.attrs['Created']
 
-            # Initialize the dictionary with a list as value
+            # Initialize the dictionary with empty list as value
             if not images.get(base_image):
                 images[base_image] = []
 
