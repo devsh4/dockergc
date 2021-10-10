@@ -21,15 +21,27 @@ This application will prune local docker image versions based on the following c
 
 ## How to run
 
-1. Clone the repo to your local
-2. Run `cd dockergc/`
-3. Run the below command to execute the application with custom threshold in minutes -
+#### Step 1: Clone the repo to your local
+```
+git clone https://github.com/devsh4/dockergc.git
+```
+#### Step 2: Go to the directory
+```
+`cd dockergc/`
+```
+
+#### Step 3: Install dependencies
+
+```
+python3 -m pip install -r requirements.txt
+```
+#### Step 4: Run the application with custom threshold in minutes (optional) -
 
 ```
 python3 prune_docker_images.py 1440
 ```
 
-*Note: If `minutes` argument isn't passed, the default is 1440 minutes (24 hours).*
+*Note: If `minutes` argument isn't passed, the default is 1440 minutes i.e. 24 hours.*
 
 ## Results
 
